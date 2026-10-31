@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Environment variables & secrets (NEVER commit!)
+.env
+.env.*
+!.env.example
+
+# Local SQLite database & private contacts
+data/
+*.db
+*.db-shm
+*.db-wal
+contacts.json
+
+# Internal hackathon brief & OS/editor artifacts
+PROJET_HACKDAY.md
+.DS_Store
+*.log
+coverage/
