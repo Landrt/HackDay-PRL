@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hands-Free — Assistant Vocal d'Accessibilité (Gemma 4)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: #111827;
+      --border: #1f2937;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --text: #f3f4f6;
+      --text-muted: #9ca3af;
+      --success: #10b981;
+      --danger: #ef4444;
+      --pulse: rgba(59, 130, 246, 0.4);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1rem;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 2rem;
+      max-width: 650px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.35rem 0.85rem;
+      background: rgba(59, 130, 246, 0.15);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      color: #60a5fa;
+      border-radius: 9999px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+    }
+
+    h1 {
+      font-size: 2.25rem;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(to right, #60a5fa, #a855f7);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    p.subtitle {
+      color: var(--text-muted);
+      font-size: 1rem;
+      line-height: 1.5;
+    }
+
+    .main-container {
+      width: 100%;
+      max-width: 720px;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .voice-hub {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 1.5rem;
+      padding: 2.5rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .mic-button {
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      background: var(--primary);
+      border: none;
+      color: white;
+      font-size: 2.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
+      position: relative;
+    }
+
+    .mic-button:hover {
+      background: var(--primary-hover);
+      transform: scale(1.05);
+    }
+
+    .mic-button.listening {
+      background: var(--danger);
+      animation: pulse 1.5s infinite;
+      box-shadow: 0 0 0 15px rgba(239, 68, 68, 0.2);
+    }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+      70% { box-shadow: 0 0 0 25px rgba(239, 68, 68, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    }
+
+    .status-text {
+      margin-top: 1.25rem;
+      font-size: 1.1rem;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .transcript-box {
+      margin-top: 0.75rem;
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      min-height: 1.5rem;
+      font-style: italic;
+    }
+
+    .actions-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .confirm-panel {
+      display: none;
+      margin-top: 1.5rem;
+      padding: 1.25rem;
+      border-radius: 1rem;
+      background: rgba(59, 130, 246, 0.08);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      width: 100%;
+      text-align: center;
+    }
+
+    .confirm-panel.visible {
+      display: block;
+    }
+
+    .confirm-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .btn {
+      padding: 0.65rem 1.5rem;
+      border-radius: 0.75rem;
+      font-weight: 600;
+      font-size: 0.95rem;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.2s;
+    }
+
+    .btn-yes {
+      background: var(--success);
+      color: white;
+    }
+    .btn-yes:hover { background: #059669; }
+
+    .btn-no {
+      background: #374151;
+      color: #e5e7eb;
+    }
+    .btn-no:hover { background: #4b5563; }
+
+    .chat-history {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 1.5rem;
+      padding: 1.5rem;
+      max-height: 380px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .msg {
+      padding: 0.85rem 1.25rem;
+      border-radius: 1rem;
+      max-width: 80%;
+      font-size: 0.95rem;
+      line-height: 1.4;
+    }
+
+    .msg-user {
+      align-self: flex-end;
+      background: var(--primary);
+      color: white;
+      border-bottom-right-radius: 0.25rem;
+    }
+
+    .msg-agent {
+      align-self: flex-start;
+      background: #1f2937;
+      color: var(--text);
+      border-bottom-left-radius: 0.25rem;
+      border: 1px solid #374151;
+    }
+
+    .controls-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      padding: 0 0.5rem;
+    }
+
+    .sync-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 8px var(--success);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="badge">Google Gemma 4 • AI belongs to everyone</div>
+    <h1>Hands-Free Desk</h1>
+    <p class="subtitle">Assistant vocal d'accessibilité autonome pour personnes en situation de handicap visuel ou moteur.</p>
+  </header>
+
+  <main class="main-container">
+    <div class="voice-hub">
+      <button id="micBtn" class="mic-button" title="Cliquer pour parler ou utiliser la touche Espace">
+        🎙️
+      </button>
+
+      <div id="statusText" class="status-text">Cliquez sur le micro ou appuyez sur Espace pour parler</div>
+      <div id="transcriptBox" class="transcript-box"></div>
+
+      <div id="confirmPanel" class="confirm-panel">
+        <div id="confirmQuestion" style="font-weight: 600; font-size: 1.05rem; margin-bottom: 0.5rem;">Confirmation requise</div>
+        <p style="font-size: 0.9rem; color: var(--text-muted);">Vous pouvez dire <strong>« Oui »</strong> ou <strong>« Non »</strong> à la voix, ou cliquer :</p>
+        <div class="confirm-buttons">
+          <button id="btnYes" class="btn btn-yes">✅ Oui, confirmer</button>
+          <button id="btnNo" class="btn btn-no">❌ Non, annuler</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="controls-bar">
+      <div class="sync-badge">
+        <div class="indicator"></div>
+        <span>Moteur Gemma 4 connecté • Agenda SQLite synchronisé</span>
+      </div>
+      <div>Canal Telegram actif : <strong>@Hands_freebot</strong></div>
+    </div>
+
+    <div id="chatHistory" class="chat-history">
+      <div class="msg msg-agent">
+        👋 Bonjour ! Je suis Hands-Free. Dites par exemple <em>« Qu'est-ce que j'ai demain ? »</em>, <em>« Ajoute dentiste jeudi à 15h »</em> ou <em>« Écris à Marie que j'arrive en retard »</em>.
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const micBtn = document.getElementById("micBtn");
+    const statusText = document.getElementById("statusText");
+    const transcriptBox = document.getElementById("transcriptBox");
+    const confirmPanel = document.getElementById("confirmPanel");
+    const confirmQuestion = document.getElementById("confirmQuestion");
+    const btnYes = document.getElementById("btnYes");
+    const btnNo = document.getElementById("btnNo");
+    const chatHistory = document.getElementById("chatHistory");
+
+    let isListening = false;
+    let pendingActionId = null;
+
+    // Reconnaissance vocale native Web Speech API (zéro dépendance, ultra-rapide)
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let recognition = null;
+
+    if (SpeechRecognition) {
+      recognition = new SpeechRecognition();
+      recognition.lang = 'fr-FR';
+      recognition.continuous = false;
+      recognition.interimResults = true;
+
+      recognition.onstart = () => {
+        isListening = true;
+        micBtn.classList.add("listening");
+        statusText.innerText = "Je vous écoute...";
+      };
+
+      recognition.onresult = (event) => {
+        const text = Array.from(event.results)
+          .map(r => r[0].transcript)
+          .join("");
+        transcriptBox.innerText = `« ${text} »`;
+
+        if (event.results[0].isFinal) {
+          handleUserUtterance(text);
+        }
+      };
+
+      recognition.onerror = (e) => {
+        console.error("Erreur vocale :", e);
+        stopListening();
+        statusText.innerText = "Je n'ai pas compris, réessayez.";
+      };
+
+      recognition.onend = () => {
+        stopListening();
+      };
+    } else {
+      statusText.innerText = "Micro non supporté par ce navigateur. Utilisez Chrome ou Edge.";
+    }
+
+    function toggleListening() {
+      if (!recognition) return;
+      if (isListening) {
+        recognition.stop();
+        stopListening();
+      } else {
+        transcriptBox.innerText = "";
+        recognition.start();
+      }
+    }
+
+    function stopListening() {
+      isListening = false;
+      micBtn.classList.remove("listening");
+      statusText.innerText = "Cliquez sur le micro ou appuyez sur Espace pour parler";
+    }
+
+    micBtn.addEventListener("click", toggleListening);
+
+    // Raccourci accessibilité : barre Espace pour parler
+    window.addEventListener("keydown", (e) => {
+      if (e.code === "Space" && e.target === document.body) {
+        e.preventDefault();
+        toggleListening();
+      }
+    });
+
+    async function handleUserUtterance(text) {
+      addMessage(text, "user");
+      statusText.innerText = "Analyse avec Gemma 4...";
+
+      try {
+        const res = await fetch("/api/agent", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: "desktop-user", text })
+        });
+        const data = await res.json();
+
+        addMessage(data.text, "agent");
+        speakText(data.text);
+
+        if (data.pending) {
+          pendingActionId = data.pending.id;
+          confirmQuestion.innerText = data.text;
+          confirmPanel.classList.add("visible");
+        } else {
+          confirmPanel.classList.remove("visible");
+          pendingActionId = null;
+        }
+      } catch (err) {
+        const errorMsg = "Désolé, une erreur est survenue lors de la communication.";
+        addMessage(errorMsg, "agent");
+        speakText(errorMsg);
+      } finally {
+        statusText.innerText = "Cliquez sur le micro ou appuyez sur Espace pour parler";
+      }
+    }
+
+    async function handleConfirmation(accepted) {
+      if (!pendingActionId) return;
+      confirmPanel.classList.remove("visible");
+      statusText.innerText = "Exécution...";
+
+      try {
+        const res = await fetch("/api/confirm", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: "desktop-user", actionId: pendingActionId, accepted })
+        });
+        const data = await res.json();
+        addMessage(data.text, "agent");
+        speakText(data.text);
+      } catch (err) {
+        addMessage("Erreur lors de la confirmation.", "agent");
+      } finally {
+        pendingActionId = null;
+        statusText.innerText = "Cliquez sur le micro ou appuyez sur Espace pour parler";
+      }
+    }
+
+    btnYes.addEventListener("click", () => handleConfirmation(true));
+    btnNo.addEventListener("click", () => handleConfirmation(false));
+
+    function addMessage(text, sender) {
+      const div = document.createElement("div");
+      div.className = `msg msg-${sender}`;
+      div.innerText = text;
+      chatHistory.appendChild(div);
+      chatHistory.scrollTop = chatHistory.scrollHeight;
+    }
+
+    // Synthèse vocale de l'ordinateur (Text-to-Speech instantané et clair)
+    function speakText(text) {
+      if (!window.speechSynthesis) return;
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = "fr-FR";
+      utterance.rate = 1.05;
+      window.speechSynthesis.speak(utterance);
+    }
+  </script>
+</body>
+</html>

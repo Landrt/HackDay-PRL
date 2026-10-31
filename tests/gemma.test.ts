@@ -5,8 +5,8 @@ import { generateWithGemma } from "../src/core/gemma.js";
 describe("Configuration", () => {
   it("charge les valeurs par défaut proprement", () => {
     const cfg = loadConfig({});
-    expect(cfg.GEMMA_MODE).toBe("api");
-    expect(cfg.GEMMA_MODEL).toBe("gemma-4-31b-it");
+    expect(cfg.GEMMA_MODE).toBe("auto");
+    expect(cfg.GEMMA_MODEL).toBe("gemini-3.5-flash-lite");
     expect(cfg.ALLOWED_USER_IDS).toEqual([]);
   });
 

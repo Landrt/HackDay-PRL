@@ -91,7 +91,8 @@ export class HandsFreeAgent implements Agent {
       }
 
       return { text: "Je n'ai pas bien compris ta demande. Peux-tu reformuler ?" };
-    } catch (err) {
+    } catch (err: any) {
+      console.error("❌ ERREUR DETAILLEE GEMMA :", err);
       return {
         text: "Une erreur est survenue lors de l'analyse de ta demande. Peux-tu répéter ?"
       };
